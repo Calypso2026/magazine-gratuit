@@ -157,19 +157,45 @@ function Home() {
   );
 }
 
+function PosterStack({ color }) {
+  // Empile quelques rectangles décalés pour évoquer une pile d'affiches
+  const layers = [
+    { rotate: -8, offset: 10, opacity: 0.35 },
+    { rotate: 6, offset: 6, opacity: 0.55 },
+    { rotate: -3, offset: 3, opacity: 0.8 },
+    { rotate: 0, offset: 0, opacity: 1 },
+  ];
+  return (
+    <div className="stack-visual">
+      {layers.map((l, i) => (
+        <div
+          key={i}
+          className="poster"
+          style={{
+            background: color,
+            transform: `translateY(${l.offset}px) rotate(${l.rotate}deg)`,
+            opacity: l.opacity,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function CategoryPreview() {
   const [categories, setCategories] = useState([]);
   useEffect(() => { api("/api/categories").then(setCategories).catch(() => {}); }, []);
   return (
-    <div className="drawer-tabs" role="tablist" aria-label="Catégories">
+    <div className="category-stacks">
       {categories.map((c) => (
         <button
           key={c.id}
-          className="drawer-tab"
-          role="tab"
+          className="stack-tile"
           onClick={() => navigate(`#/livres?category=${c.id}`)}
         >
-          {c.code} · {c.label}
+          <PosterStack color={c.color} />
+          <span className="tile-label">{c.label}</span>
+          <span className="tile-code mono">{c.code}</span>
         </button>
       ))}
     </div>
@@ -220,6 +246,7 @@ function Catalog({ hash }) {
             key={c.id}
             className="drawer-tab"
             aria-selected={active === c.id}
+            style={{ "--tab-color": c.color }}
             onClick={() => navigate(`#/livres?category=${c.id}`)}
           >
             {c.code} · {c.label}
@@ -233,22 +260,27 @@ function Catalog({ hash }) {
         <p className="empty-state">Aucune fiche ne correspond à cette recherche.</p>
       ) : (
         <div className="book-grid">
-          {books.map((b) => (
-            <div
-              key={b.id}
-              className="index-card"
-              tabIndex={0}
-              role="link"
-              onClick={() => navigate(`#/livre/${b.id}`)}
-              onKeyDown={(e) => e.key === "Enter" && navigate(`#/livre/${b.id}`)}
-            >
-              <span className="stamp">{b.year}</span>
-              <h3>{b.title}</h3>
-              <div className="author">{b.author}</div>
-              <p className="summary">{b.summary}</p>
-              <div className="meta">{b.sourceLabel}</div>
-            </div>
-          ))}
+          {books.map((b, i) => {
+            const cat = categories.find((c) => c.id === b.category);
+            const tilt = i % 2 === 0 ? "-1.2deg" : "1.4deg";
+            return (
+              <div
+                key={b.id}
+                className="index-card"
+                style={{ "--card-color": cat ? cat.color : "#FF5A36", "--tilt": tilt }}
+                tabIndex={0}
+                role="link"
+                onClick={() => navigate(`#/livre/${b.id}`)}
+                onKeyDown={(e) => e.key === "Enter" && navigate(`#/livre/${b.id}`)}
+              >
+                <span className="stamp">{b.year}</span>
+                <h3>{b.title}</h3>
+                <div className="author">{b.author}</div>
+                <p className="summary">{b.summary}</p>
+                <div className="meta">{b.sourceLabel}</div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -261,6 +293,7 @@ function Catalog({ hash }) {
 
 function BookDetail({ id, user }) {
   const [book, setBook] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
@@ -270,12 +303,16 @@ function BookDetail({ id, user }) {
     api(`/api/books/${id}/comments`).then(setComments).catch(() => {});
   }, [id]);
 
+  useEffect(() => { api("/api/categories").then(setCategories).catch(() => {}); }, []);
+
   useEffect(() => {
     setBook(null);
     setNotFound(false);
     api(`/api/books/${id}`).then(setBook).catch(() => setNotFound(true));
     loadComments();
   }, [id, loadComments]);
+
+  const cat = book ? categories.find((c) => c.id === book.category) : null;
 
   async function submitComment(e) {
     e.preventDefault();
@@ -295,8 +332,8 @@ function BookDetail({ id, user }) {
 
   return (
     <div className="app-shell">
-      <div className="book-detail">
-        <span className="stamp">{book.year}</span>
+      <div className="book-detail" style={{ "--detail-color": cat ? cat.color : "#FF5A36" }}>
+        <span className="stamp" style={{ background: cat ? cat.color : "#FF5A36", color: "#fff" }}>{book.year}</span>
         <h1 style={{ marginTop: "0.6rem" }}>{book.title}</h1>
         <p className="author" style={{ color: "var(--forest)" }}>{book.author}</p>
         <p>{book.summary}</p>

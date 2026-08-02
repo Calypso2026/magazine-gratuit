@@ -1,0 +1,148 @@
+{
+  "users": [],
+  "categories": [
+    { "id": "litterature", "label": "Littérature classique", "code": "800.L" },
+    { "id": "poesie", "label": "Poésie", "code": "841.P" },
+    { "id": "histoire", "label": "Histoire", "code": "900.H" },
+    { "id": "philosophie", "label": "Philosophie", "code": "100.PH" },
+    { "id": "sciences", "label": "Sciences", "code": "500.S" },
+    { "id": "jeunesse", "label": "Jeunesse & contes", "code": "398.J" },
+    { "id": "cuisine", "label": "Cuisine ancienne", "code": "641.C" },
+    { "id": "magazines", "label": "Magazines & journaux anciens", "code": "050.M" }
+  ],
+  "books": [
+    {
+      "id": "b1",
+      "title": "Les Misérables",
+      "author": "Victor Hugo",
+      "year": "1862",
+      "category": "litterature",
+      "summary": "La traversée du siècle de Jean Valjean, entre bagne, rédemption et barricades parisiennes.",
+      "source": "https://www.gutenberg.org/ebooks/search/?query=Les+Mis%C3%A9rables+Victor+Hugo",
+      "sourceLabel": "Projet Gutenberg"
+    },
+    {
+      "id": "b2",
+      "title": "Le Comte de Monte-Cristo",
+      "author": "Alexandre Dumas",
+      "year": "1844",
+      "category": "litterature",
+      "summary": "Edmond Dantès, injustement emprisonné, orchestre depuis l'ombre une vengeance minutieuse.",
+      "source": "https://www.gutenberg.org/ebooks/search/?query=Le+Comte+de+Monte-Cristo",
+      "sourceLabel": "Projet Gutenberg"
+    },
+    {
+      "id": "b3",
+      "title": "Candide, ou l'Optimisme",
+      "author": "Voltaire",
+      "year": "1759",
+      "category": "philosophie",
+      "summary": "Un conte philosophique qui malmène l'idée que tout va pour le mieux dans le meilleur des mondes.",
+      "source": "https://www.gutenberg.org/ebooks/search/?query=Candide+Voltaire",
+      "sourceLabel": "Projet Gutenberg"
+    },
+    {
+      "id": "b4",
+      "title": "Vingt mille lieues sous les mers",
+      "author": "Jules Verne",
+      "year": "1870",
+      "category": "sciences",
+      "summary": "À bord du Nautilus, le capitaine Nemo explore les fonds marins du globe.",
+      "source": "https://www.gutenberg.org/ebooks/search/?query=Vingt+mille+lieues+sous+les+mers",
+      "sourceLabel": "Projet Gutenberg"
+    },
+    {
+      "id": "b5",
+      "title": "Fables",
+      "author": "Jean de La Fontaine",
+      "year": "1668",
+      "category": "poesie",
+      "summary": "Des animaux qui parlent pour mieux dire les travers humains, en vers ciselés.",
+      "source": "https://www.gutenberg.org/ebooks/search/?query=Fables+La+Fontaine",
+      "sourceLabel": "Projet Gutenberg"
+    },
+    {
+      "id": "b6",
+      "title": "Contes de ma mère l'Oye",
+      "author": "Charles Perrault",
+      "year": "1697",
+      "category": "jeunesse",
+      "summary": "Le Petit Chaperon rouge, Cendrillon, le Chat botté : les contes fondateurs du genre.",
+      "source": "https://www.gutenberg.org/ebooks/search/?query=Contes+Charles+Perrault",
+      "sourceLabel": "Projet Gutenberg"
+    },
+    {
+      "id": "b7",
+      "title": "Discours de la méthode",
+      "author": "René Descartes",
+      "year": "1637",
+      "category": "philosophie",
+      "summary": "Le texte fondateur du doute méthodique et du « Je pense, donc je suis ».",
+      "source": "https://www.gutenberg.org/ebooks/search/?query=Discours+de+la+m%C3%A9thode+Descartes",
+      "sourceLabel": "Projet Gutenberg"
+    },
+    {
+      "id": "b8",
+      "title": "Notre-Dame de Paris",
+      "author": "Victor Hugo",
+      "year": "1831",
+      "category": "litterature",
+      "summary": "Quasimodo, Esmeralda et la cathédrale, personnage à part entière du roman.",
+      "source": "https://www.gutenberg.org/ebooks/search/?query=Notre-Dame+de+Paris+Victor+Hugo",
+      "sourceLabel": "Projet Gutenberg"
+    },
+    {
+      "id": "b9",
+      "title": "Le Tour du monde en quatre-vingts jours",
+      "author": "Jules Verne",
+      "year": "1873",
+      "category": "litterature",
+      "summary": "Phileas Fogg parie qu'il peut boucler le globe en 80 jours pile.",
+      "source": "https://www.gutenberg.org/ebooks/search/?query=Le+Tour+du+monde+en+quatre-vingts+jours",
+      "sourceLabel": "Projet Gutenberg"
+    },
+    {
+      "id": "b10",
+      "title": "Histoire de France (extraits)",
+      "author": "Jules Michelet",
+      "year": "1833",
+      "category": "histoire",
+      "summary": "La grande fresque nationale par l'un des historiens majeurs du XIXe siècle.",
+      "source": "https://www.gutenberg.org/ebooks/search/?query=Jules+Michelet+Histoire+de+France",
+      "sourceLabel": "Projet Gutenberg"
+    },
+    {
+      "id": "b11",
+      "title": "Le Cuisinier royal et bourgeois",
+      "author": "François Massialot",
+      "year": "1691",
+      "category": "cuisine",
+      "summary": "Un des premiers grands traités de cuisine française, entre recettes et étiquette de table.",
+      "source": "https://gallica.bnf.fr/services/engine/search/sru?query=cuisinier%20royal%20et%20bourgeois",
+      "sourceLabel": "Gallica (BnF)"
+    },
+    {
+      "id": "b12",
+      "title": "L'Illustration — collection ancienne",
+      "author": "Divers",
+      "year": "1843-1944",
+      "category": "magazines",
+      "summary": "Un siècle de grand hebdomadaire illustré français, numérisé et consultable librement.",
+      "source": "https://gallica.bnf.fr/ark:/12148/cb32760784x/date",
+      "sourceLabel": "Gallica (BnF)"
+    },
+    {
+      "id": "b13",
+      "title": "Le Petit Journal — archives",
+      "author": "Divers",
+      "year": "1863-1944",
+      "category": "magazines",
+      "summary": "Le quotidien populaire illustré, témoin de la vie française de la Belle Époque.",
+      "source": "https://gallica.bnf.fr/ark:/12148/cb32805607k/date",
+      "sourceLabel": "Gallica (BnF)"
+    }
+  ],
+  "comments": [],
+  "messages": [],
+  "sessions": []
+}

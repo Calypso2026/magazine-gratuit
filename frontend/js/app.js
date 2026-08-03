@@ -343,6 +343,20 @@ function Catalog({ hash }) {
                 onKeyDown={(e) => e.key === "Enter" && navigate(`#/livre/${b.id}`)}
               >
                 <CoverArt id={b.id} color={cat ? cat.color : "#5B6CFF"} context="grid" imageUrl={b.coverImage} />
+                {b.source && (
+                  <a
+                    href={b.source}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="card-download"
+                    title={`Télécharger : ${b.title}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+                      <path fill="currentColor" d="M10 2a1 1 0 0 1 1 1v7.6l2.3-2.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L9 10.6V3a1 1 0 0 1 1-1Z M4 15a1 1 0 0 1 1 1v1h10v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z" />
+                    </svg>
+                  </a>
+                )}
                 <div className="card-body">
                   <span className="stamp">{b.year}</span>
                   <h3>{b.title}</h3>

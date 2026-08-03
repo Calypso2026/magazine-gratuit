@@ -381,6 +381,7 @@ function BookDetail({ id, user }) {
   const [book, setBook] = useState(null);
   const [categories, setCategories] = useState([]);
   const [comments, setComments] = useState([]);
+  const [related, setRelated] = useState([]);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [notFound, setNotFound] = useState(false);
@@ -394,7 +395,15 @@ function BookDetail({ id, user }) {
   useEffect(() => {
     setBook(null);
     setNotFound(false);
-    api(`/api/books/${id}`).then(setBook).catch(() => setNotFound(true));
+    setRelated([]);
+    api(`/api/books/${id}`)
+      .then((b) => {
+        setBook(b);
+        api(`/api/books?category=${b.category}`).then((list) => {
+          setRelated(list.filter((x) => x.id !== id).slice(0, 4));
+        }).catch(() => {});
+      })
+      .catch(() => setNotFound(true));
     loadComments();
   }, [id, loadComments]);
 
@@ -433,6 +442,32 @@ function BookDetail({ id, user }) {
         </div>
         </div>
       </div>
+
+      {related.length > 0 && (
+        <div className="related-section">
+          <h2 style={{ marginBottom: "1rem" }}>Fiches similaires</h2>
+          <div className="book-grid related-grid">
+            {related.map((r) => (
+              <div
+                key={r.id}
+                className="index-card"
+                style={{ "--card-color": cat ? cat.color : "#5B6CFF" }}
+                tabIndex={0}
+                role="link"
+                onClick={() => navigate(`#/livre/${r.id}`)}
+                onKeyDown={(e) => e.key === "Enter" && navigate(`#/livre/${r.id}`)}
+              >
+                <CoverArt id={r.id} color={cat ? cat.color : "#5B6CFF"} context="related" imageUrl={r.coverImage} />
+                <div className="card-body">
+                  <span className="stamp">{r.year}</span>
+                  <h3>{r.title}</h3>
+                  <div className="author">{r.author}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="comments">
         <h2>Commentaires</h2>
@@ -630,6 +665,7 @@ function AdminBooks({ categories }) {
   const [books, setBooks] = useState(null);
   const [form, setForm] = useState(EMPTY_BOOK_FORM);
   const [editingId, setEditingId] = useState(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -641,10 +677,11 @@ function AdminBooks({ categories }) {
   function startEdit(b) {
     setEditingId(b.id);
     setForm({ title: b.title, author: b.author, year: b.year, category: b.category, summary: b.summary, source: b.source, sourceLabel: b.sourceLabel, coverImage: b.coverImage || "" });
+    setShowAdvanced(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function cancelEdit() { setEditingId(null); setForm(EMPTY_BOOK_FORM); setError(""); }
+  function cancelEdit() { setEditingId(null); setForm(EMPTY_BOOK_FORM); setError(""); setShowAdvanced(false); }
 
   async function submit(e) {
     e.preventDefault();
@@ -677,21 +714,20 @@ function AdminBooks({ categories }) {
 
   return (
     <div>
-      <h2 style={{ marginBottom: "1rem" }}>{editingId ? "Modifier la fiche" : "Ajouter une fiche"}</h2>
+      <h2 style={{ marginBottom: "0.3rem" }}>{editingId ? "Modifier la fiche" : "Ajouter une fiche"}</h2>
+      <p style={{ color: "var(--text-dim)", fontSize: "0.85rem", marginBottom: "1rem" }}>
+        Remplis juste titre, auteur et catégorie pour commencer — le reste est facultatif.
+      </p>
       <form onSubmit={submit} className="admin-form">
         {error && <div className="form-error">{error}</div>}
         <div className="admin-form-grid">
           <div className="field">
             <label>Titre</label>
-            <input required value={form.title} onChange={update("title")} />
+            <input required value={form.title} onChange={update("title")} placeholder="Le titre du livre / magazine" />
           </div>
           <div className="field">
             <label>Auteur</label>
             <input value={form.author} onChange={update("author")} />
-          </div>
-          <div className="field">
-            <label>Année</label>
-            <input value={form.year} onChange={update("year")} placeholder="1862" />
           </div>
           <div className="field">
             <label>Catégorie</label>
@@ -700,35 +736,53 @@ function AdminBooks({ categories }) {
               {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </div>
+          <div className="field">
+            <label>Année</label>
+            <input value={form.year} onChange={update("year")} placeholder="1862" />
+          </div>
           <div className="field" style={{ gridColumn: "1 / -1" }}>
-            <label>Résumé</label>
+            <label>Résumé (quelques lignes)</label>
             <textarea rows={2} value={form.summary} onChange={update("summary")} />
           </div>
-          <div className="field">
-            <label>Lien source (http/https)</label>
-            <input value={form.source} onChange={update("source")} placeholder="https://..." />
-          </div>
-          <div className="field">
-            <label>Nom de la source</label>
-            <input value={form.sourceLabel} onChange={update("sourceLabel")} placeholder="Projet Gutenberg" />
-          </div>
-          <div className="field" style={{ gridColumn: "1 / -1" }}>
-            <label>Image de couverture (URL, optionnel)</label>
-            <input
-              value={form.coverImage}
-              onChange={update("coverImage")}
-              placeholder="https://exemple.com/couverture.jpg"
-            />
-            <span style={{ fontSize: "0.78rem", color: "var(--text-dim)" }}>
-              Colle ici le lien direct d'une image (ex. une photo hébergée sur imgur.com — dépose ton image dessus,
-              clic droit sur l'image affichée → « Copier l'adresse de l'image »). Laisse vide pour garder l'affiche générée automatiquement.
-            </span>
-            {form.coverImage && (
-              <img src={form.coverImage} alt="Aperçu" className="admin-cover-preview" />
-            )}
-          </div>
         </div>
-        <div style={{ display: "flex", gap: "0.7rem", marginTop: "0.6rem" }}>
+
+        <button
+          type="button"
+          className="linklike admin-advanced-toggle"
+          onClick={() => setShowAdvanced((v) => !v)}
+        >
+          {showAdvanced ? "▾ Masquer les options avancées" : "▸ Ajouter un lien de téléchargement ou une photo (facultatif)"}
+        </button>
+
+        {showAdvanced && (
+          <div className="admin-form-grid" style={{ marginTop: "0.8rem" }}>
+            <div className="field">
+              <label>Lien source (http/https)</label>
+              <input value={form.source} onChange={update("source")} placeholder="https://..." />
+            </div>
+            <div className="field">
+              <label>Nom de la source</label>
+              <input value={form.sourceLabel} onChange={update("sourceLabel")} placeholder="Projet Gutenberg" />
+            </div>
+            <div className="field" style={{ gridColumn: "1 / -1" }}>
+              <label>Image de couverture (URL)</label>
+              <input
+                value={form.coverImage}
+                onChange={update("coverImage")}
+                placeholder="https://exemple.com/couverture.jpg"
+              />
+              <span style={{ fontSize: "0.78rem", color: "var(--text-dim)" }}>
+                Colle ici le lien direct d'une image (ex. une photo hébergée sur imgur.com — dépose ton image dessus,
+                clic droit sur l'image affichée → « Copier l'adresse de l'image »). Laisse vide pour garder l'affiche générée automatiquement.
+              </span>
+              {form.coverImage && (
+                <img src={form.coverImage} alt="Aperçu" className="admin-cover-preview" />
+              )}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: "0.7rem", marginTop: "1rem" }}>
           <button className="btn" type="submit" disabled={saving}>{editingId ? "Enregistrer" : "Ajouter"}</button>
           {editingId && <button type="button" className="btn secondary" onClick={cancelEdit}>Annuler</button>}
         </div>
@@ -737,12 +791,17 @@ function AdminBooks({ categories }) {
       <h2 style={{ margin: "2.2rem 0 1rem" }}>Fiches existantes ({books ? books.length : "…"})</h2>
       {books === null ? (
         <p className="empty-state">Chargement…</p>
+      ) : books.length === 0 ? (
+        <p className="empty-state">Aucune fiche pour le moment — ajoute la première ci-dessus.</p>
       ) : (
         <div className="admin-list">
           {books.map((b) => {
             const cat = categories.find((c) => c.id === b.category);
             return (
               <div className="admin-row" key={b.id}>
+                <div className="admin-row-thumb">
+                  <CoverArt id={b.id} color={cat ? cat.color : "#5B6CFF"} context="admin" imageUrl={b.coverImage} />
+                </div>
                 <span className="stamp" style={{ background: cat ? cat.color : "#5B6CFF" }}>{cat ? cat.label : b.category}</span>
                 <div className="admin-row-main">
                   <strong>{b.title}</strong>
@@ -823,8 +882,134 @@ function AdminMessages() {
   );
 }
 
+function AdminOverview({ categories, onNavigate }) {
+  const [counts, setCounts] = useState(null);
+  useEffect(() => {
+    Promise.all([
+      api("/api/books"),
+      api("/api/admin/comments").catch(() => []),
+      api("/api/admin/messages").catch(() => []),
+    ]).then(([books, comments, messages]) => {
+      setCounts({ books: books.length, comments: comments.length, messages: messages.length });
+    });
+  }, []);
+
+  const cards = [
+    { key: "fiches", label: "Fiches au catalogue", value: counts ? counts.books : "…", color: "#5B6CFF" },
+    { key: "categories", label: "Catégories", value: categories.length, color: "#FF3DA6" },
+    { key: "commentaires", label: "Commentaires", value: counts ? counts.comments : "…", color: "#33E0A1" },
+    { key: "messages", label: "Messages de contact", value: counts ? counts.messages : "…", color: "#FFA23D" },
+  ];
+
+  return (
+    <div>
+      <div className="overview-grid">
+        {cards.map((c) => (
+          <button key={c.key} className="overview-card" style={{ "--oc-color": c.color }} onClick={() => onNavigate(c.key)}>
+            <span className="overview-value">{c.value}</span>
+            <span className="overview-label">{c.label}</span>
+          </button>
+        ))}
+      </div>
+      <p style={{ color: "var(--text-dim)", marginTop: "1.4rem", fontSize: "0.9rem" }}>
+        Clique sur une carte pour aller directement à la section correspondante.
+      </p>
+    </div>
+  );
+}
+
+const EMPTY_CATEGORY_FORM = { label: "", code: "", color: "#5B6CFF" };
+
+function AdminCategories({ categories, onChanged }) {
+  const [form, setForm] = useState(EMPTY_CATEGORY_FORM);
+  const [editingId, setEditingId] = useState(null);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  function update(field) { return (e) => setForm((f) => ({ ...f, [field]: e.target.value })); }
+
+  function startEdit(c) {
+    setEditingId(c.id);
+    setForm({ label: c.label, code: c.code, color: c.color });
+  }
+  function cancelEdit() { setEditingId(null); setForm(EMPTY_CATEGORY_FORM); setError(""); }
+
+  async function submit(e) {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      if (editingId) {
+        await api(`/api/admin/categories/${editingId}`, { method: "PUT", body: form });
+      } else {
+        await api("/api/admin/categories", { method: "POST", body: form });
+      }
+      cancelEdit();
+      onChanged();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove(id) {
+    if (!window.confirm("Supprimer cette catégorie ?")) return;
+    try {
+      await api(`/api/admin/categories/${id}`, { method: "DELETE" });
+      onChanged();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  return (
+    <div>
+      <h2 style={{ marginBottom: "1rem" }}>{editingId ? "Modifier la catégorie" : "Ajouter une catégorie"}</h2>
+      <form onSubmit={submit} className="admin-form">
+        {error && <div className="form-error">{error}</div>}
+        <div className="admin-form-grid">
+          <div className="field">
+            <label>Nom</label>
+            <input required value={form.label} onChange={update("label")} placeholder="Bandes dessinées" />
+          </div>
+          <div className="field">
+            <label>Code (repère court)</label>
+            <input value={form.code} onChange={update("code")} placeholder="090" />
+          </div>
+          <div className="field">
+            <label>Couleur</label>
+            <input type="color" value={form.color} onChange={update("color")} style={{ height: "42px", padding: "0.2rem" }} />
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "0.7rem", marginTop: "0.8rem" }}>
+          <button className="btn" type="submit" disabled={saving}>{editingId ? "Enregistrer" : "Ajouter"}</button>
+          {editingId && <button type="button" className="btn secondary" onClick={cancelEdit}>Annuler</button>}
+        </div>
+      </form>
+
+      <h2 style={{ margin: "2.2rem 0 1rem" }}>Catégories existantes ({categories.length})</h2>
+      <div className="admin-list">
+        {categories.map((c) => (
+          <div className="admin-row" key={c.id}>
+            <span className="stamp" style={{ background: c.color }}>{c.code}</span>
+            <div className="admin-row-main"><strong>{c.label}</strong></div>
+            <div className="admin-row-actions">
+              <button className="btn secondary" onClick={() => startEdit(c)}>Modifier</button>
+              <button className="btn secondary danger" onClick={() => remove(c.id)}>Supprimer</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p style={{ color: "var(--text-dim)", marginTop: "0.8rem", fontSize: "0.85rem" }}>
+        Une catégorie encore utilisée par des fiches ne peut pas être supprimée — modifie d'abord ces fiches.
+      </p>
+    </div>
+  );
+}
+
 function Admin({ user }) {
-  const [tab, setTab] = useState("fiches");
+  const [tab, setTab] = useState("vue");
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -842,14 +1027,18 @@ function Admin({ user }) {
   return (
     <div className="app-shell">
       <h1 style={{ margin: "2rem 0 0.3rem" }}>Administration</h1>
-      <p style={{ color: "var(--text-dim)", marginBottom: "1.2rem" }}>Gère les fiches, les commentaires et les messages du site.</p>
+      <p style={{ color: "var(--text-dim)", marginBottom: "1.2rem" }}>Gère les fiches, les catégories, les commentaires et les messages du site.</p>
       <div className="drawer-tabs">
+        <button className="drawer-tab" aria-selected={tab === "vue"} onClick={() => setTab("vue")}>Vue d'ensemble</button>
         <button className="drawer-tab" aria-selected={tab === "fiches"} onClick={() => setTab("fiches")}>Fiches</button>
+        <button className="drawer-tab" aria-selected={tab === "categories"} onClick={() => setTab("categories")}>Catégories</button>
         <button className="drawer-tab" aria-selected={tab === "commentaires"} onClick={() => setTab("commentaires")}>Commentaires</button>
         <button className="drawer-tab" aria-selected={tab === "messages"} onClick={() => setTab("messages")}>Messages</button>
       </div>
       <div style={{ marginTop: "1.4rem" }}>
+        {tab === "vue" && <AdminOverview categories={categories} onNavigate={setTab} />}
         {tab === "fiches" && <AdminBooks categories={categories} />}
+        {tab === "categories" && <AdminCategories categories={categories} onChanged={() => api("/api/categories").then(setCategories)} />}
         {tab === "commentaires" && <AdminComments />}
         {tab === "messages" && <AdminMessages />}
       </div>

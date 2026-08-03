@@ -496,6 +496,68 @@ route("DELETE", "/api/admin/messages/:id", async (req, res, params, cookies) => 
   sendJson(res, 200, { ok: true });
 });
 
+/* --- admin : créer une catégorie --- */
+function slugify(str) {
+  return String(str)
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+}
+
+route("POST", "/api/admin/categories", async (req, res, params, cookies) => {
+  if (!requireAdmin(req, res, cookies)) return;
+  const db = load();
+  const body = await readBody(req);
+  const label = cleanText(body.label, 60);
+  const code = cleanText(body.code, 20) || "000";
+  const color = /^#[0-9A-Fa-f]{6}$/.test(body.color || "") ? body.color : "#5B6CFF";
+  if (label.length < 2) return sendJson(res, 400, { error: "Nom de catégorie trop court." });
+
+  let id = slugify(label);
+  if (!id) return sendJson(res, 400, { error: "Nom de catégorie invalide." });
+  let suffix = 1;
+  const baseId = id;
+  while (db.categories.some((c) => c.id === id)) { id = `${baseId}-${++suffix}`; }
+
+  const category = { id, label, code, color };
+  db.categories.push(category);
+  await save();
+  sendJson(res, 201, category);
+});
+
+/* --- admin : modifier une catégorie --- */
+route("PUT", "/api/admin/categories/:id", async (req, res, params, cookies) => {
+  if (!requireAdmin(req, res, cookies)) return;
+  const db = load();
+  const cat = db.categories.find((c) => c.id === params.id);
+  if (!cat) return sendJson(res, 404, { error: "Catégorie introuvable." });
+  const body = await readBody(req);
+  if (body.label !== undefined) {
+    const label = cleanText(body.label, 60);
+    if (label.length < 2) return sendJson(res, 400, { error: "Nom de catégorie trop court." });
+    cat.label = label;
+  }
+  if (body.code !== undefined) cat.code = cleanText(body.code, 20);
+  if (body.color !== undefined && /^#[0-9A-Fa-f]{6}$/.test(body.color)) cat.color = body.color;
+  await save();
+  sendJson(res, 200, cat);
+});
+
+/* --- admin : supprimer une catégorie (refusé si des fiches l'utilisent) --- */
+route("DELETE", "/api/admin/categories/:id", async (req, res, params, cookies) => {
+  if (!requireAdmin(req, res, cookies)) return;
+  const db = load();
+  const used = db.books.some((b) => b.category === params.id);
+  if (used) return sendJson(res, 400, { error: "Impossible : des fiches utilisent encore cette catégorie." });
+  const before = db.categories.length;
+  db.categories = db.categories.filter((c) => c.id !== params.id);
+  if (db.categories.length === before) return sendJson(res, 404, { error: "Catégorie introuvable." });
+  await save();
+  sendJson(res, 200, { ok: true });
+});
+
 /* ---------------------------------------------------------------- */
 /* Fichiers statiques (frontend)                                     */
 /* ---------------------------------------------------------------- */

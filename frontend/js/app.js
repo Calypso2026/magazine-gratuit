@@ -85,8 +85,50 @@ function Recaptcha({ siteKey, onToken }) {
 }
 
 /* ---------------------------------------------------------------- */
-/* En-tête / navigation                                               */
+/* Affiches génériques (couvertures générées, pas de vraies images)  */
 /* ---------------------------------------------------------------- */
+
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function seededRand(seed) {
+  let s = (seed % 2147483647) || 1;
+  return function () {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+function CoverArt({ id, color, context = "c" }) {
+  const rand = seededRand(hashStr(id + context));
+  const shapes = Array.from({ length: 3 }).map((_, i) => ({
+    cx: 20 + rand() * 160,
+    cy: 15 + rand() * 90,
+    r: 18 + rand() * 42,
+    opacity: 0.12 + rand() * 0.22,
+  }));
+  const gid = `cover-${context}-${id}`;
+  return (
+    <svg className="cover-art" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={color} />
+          <stop offset="100%" stopColor="#0A1128" />
+        </linearGradient>
+      </defs>
+      <rect width="200" height="120" fill={`url(#${gid})`} />
+      {shapes.map((s, i) => (
+        <circle key={i} cx={s.cx} cy={s.cy} r={s.r} fill="#fff" opacity={s.opacity} />
+      ))}
+      <rect x="0" y="0" width="200" height="120" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+    </svg>
+  );
+}
+
+
 
 function TopBar({ user, onLogout }) {
   const [q, setQ] = useState("");
@@ -189,8 +231,11 @@ function CategoryPreview() {
               <div className="mini-posters">
                 {preview.map((b) => (
                   <div key={b.id} className="mini-poster">
-                    <span className="mp-title">{b.title}</span>
-                    <span className="mp-year mono">{b.year}</span>
+                    <CoverArt id={b.id} color={c.color} context="mini" />
+                    <div className="mp-body">
+                      <span className="mp-title">{b.title}</span>
+                      <span className="mp-year mono">{b.year}</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -260,24 +305,26 @@ function Catalog({ hash }) {
         <p className="empty-state">Aucune fiche ne correspond à cette recherche.</p>
       ) : (
         <div className="book-grid">
-          {books.map((b, i) => {
+          {books.map((b) => {
             const cat = categories.find((c) => c.id === b.category);
-            const tilt = i % 2 === 0 ? "-1.2deg" : "1.4deg";
             return (
               <div
                 key={b.id}
                 className="index-card"
-                style={{ "--card-color": cat ? cat.color : "#FF5A36", "--tilt": tilt }}
+                style={{ "--card-color": cat ? cat.color : "#5B6CFF" }}
                 tabIndex={0}
                 role="link"
                 onClick={() => navigate(`#/livre/${b.id}`)}
                 onKeyDown={(e) => e.key === "Enter" && navigate(`#/livre/${b.id}`)}
               >
-                <span className="stamp">{b.year}</span>
-                <h3>{b.title}</h3>
-                <div className="author">{b.author}</div>
-                <p className="summary">{b.summary}</p>
-                <div className="meta">{b.sourceLabel}</div>
+                <CoverArt id={b.id} color={cat ? cat.color : "#5B6CFF"} context="grid" />
+                <div className="card-body">
+                  <span className="stamp">{b.year}</span>
+                  <h3>{b.title}</h3>
+                  <div className="author">{b.author}</div>
+                  <p className="summary">{b.summary}</p>
+                  <div className="meta">{b.sourceLabel}</div>
+                </div>
               </div>
             );
           })}
@@ -332,16 +379,19 @@ function BookDetail({ id, user }) {
 
   return (
     <div className="app-shell">
-      <div className="book-detail" style={{ "--detail-color": cat ? cat.color : "#FF5A36" }}>
-        <span className="stamp" style={{ background: cat ? cat.color : "#FF5A36", color: "#fff" }}>{book.year}</span>
+      <div className="book-detail" style={{ "--detail-color": cat ? cat.color : "#5B6CFF" }}>
+        <CoverArt id={book.id} color={cat ? cat.color : "#5B6CFF"} context="detail" />
+        <div className="detail-body">
+        <span className="stamp" style={{ background: cat ? cat.color : "#5B6CFF", color: "#fff" }}>{book.year}</span>
         <h1 style={{ marginTop: "0.6rem" }}>{book.title}</h1>
-        <p className="author" style={{ color: "var(--forest)" }}>{book.author}</p>
+        <p className="author" style={{ color: "var(--text-dim)" }}>{book.author}</p>
         <p>{book.summary}</p>
         <div className="meta-row">
           <a className="btn" href={book.source} target="_blank" rel="noopener noreferrer">
             Lire / télécharger sur {book.sourceLabel}
           </a>
           <button className="btn secondary" onClick={() => navigate("#/livres")}>Retour au catalogue</button>
+        </div>
         </div>
       </div>
 
@@ -535,21 +585,172 @@ function Contact() {
 /* Admin : messages reçus                                             */
 /* ---------------------------------------------------------------- */
 
-function Admin({ user }) {
-  const [messages, setMessages] = useState(null);
-  useEffect(() => {
-    if (user && user.role === "admin") {
-      api("/api/admin/messages").then(setMessages).catch(() => setMessages([]));
-    }
-  }, [user]);
+const EMPTY_BOOK_FORM = { title: "", author: "", year: "", category: "", summary: "", source: "", sourceLabel: "" };
 
-  if (user === undefined) return null;
-  if (!user || user.role !== "admin") {
-    return <div className="app-shell"><p className="empty-state">Accès réservé à l'administrateur.</p></div>;
+function AdminBooks({ categories }) {
+  const [books, setBooks] = useState(null);
+  const [form, setForm] = useState(EMPTY_BOOK_FORM);
+  const [editingId, setEditingId] = useState(null);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(() => { api("/api/books").then(setBooks).catch(() => setBooks([])); }, []);
+  useEffect(() => { load(); }, [load]);
+
+  function update(field) { return (e) => setForm((f) => ({ ...f, [field]: e.target.value })); }
+
+  function startEdit(b) {
+    setEditingId(b.id);
+    setForm({ title: b.title, author: b.author, year: b.year, category: b.category, summary: b.summary, source: b.source, sourceLabel: b.sourceLabel });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  function cancelEdit() { setEditingId(null); setForm(EMPTY_BOOK_FORM); setError(""); }
+
+  async function submit(e) {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      if (editingId) {
+        await api(`/api/admin/books/${editingId}`, { method: "PUT", body: form });
+      } else {
+        await api("/api/admin/books", { method: "POST", body: form });
+      }
+      cancelEdit();
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove(id) {
+    if (!window.confirm("Supprimer définitivement cette fiche et ses commentaires ?")) return;
+    try {
+      await api(`/api/admin/books/${id}`, { method: "DELETE" });
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   return (
-    <div className="app-shell">
-      <h1 style={{ margin: "2rem 0 1rem" }}>Messages reçus</h1>
+    <div>
+      <h2 style={{ marginBottom: "1rem" }}>{editingId ? "Modifier la fiche" : "Ajouter une fiche"}</h2>
+      <form onSubmit={submit} className="admin-form">
+        {error && <div className="form-error">{error}</div>}
+        <div className="admin-form-grid">
+          <div className="field">
+            <label>Titre</label>
+            <input required value={form.title} onChange={update("title")} />
+          </div>
+          <div className="field">
+            <label>Auteur</label>
+            <input value={form.author} onChange={update("author")} />
+          </div>
+          <div className="field">
+            <label>Année</label>
+            <input value={form.year} onChange={update("year")} placeholder="1862" />
+          </div>
+          <div className="field">
+            <label>Catégorie</label>
+            <select required value={form.category} onChange={update("category")}>
+              <option value="">— choisir —</option>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+          </div>
+          <div className="field" style={{ gridColumn: "1 / -1" }}>
+            <label>Résumé</label>
+            <textarea rows={2} value={form.summary} onChange={update("summary")} />
+          </div>
+          <div className="field">
+            <label>Lien source (http/https)</label>
+            <input value={form.source} onChange={update("source")} placeholder="https://..." />
+          </div>
+          <div className="field">
+            <label>Nom de la source</label>
+            <input value={form.sourceLabel} onChange={update("sourceLabel")} placeholder="Projet Gutenberg" />
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "0.7rem", marginTop: "0.6rem" }}>
+          <button className="btn" type="submit" disabled={saving}>{editingId ? "Enregistrer" : "Ajouter"}</button>
+          {editingId && <button type="button" className="btn secondary" onClick={cancelEdit}>Annuler</button>}
+        </div>
+      </form>
+
+      <h2 style={{ margin: "2.2rem 0 1rem" }}>Fiches existantes ({books ? books.length : "…"})</h2>
+      {books === null ? (
+        <p className="empty-state">Chargement…</p>
+      ) : (
+        <div className="admin-list">
+          {books.map((b) => {
+            const cat = categories.find((c) => c.id === b.category);
+            return (
+              <div className="admin-row" key={b.id}>
+                <span className="stamp" style={{ background: cat ? cat.color : "#5B6CFF" }}>{cat ? cat.label : b.category}</span>
+                <div className="admin-row-main">
+                  <strong>{b.title}</strong>
+                  <span className="mono" style={{ color: "var(--text-dim)" }}> · {b.author} · {b.year}</span>
+                </div>
+                <div className="admin-row-actions">
+                  <button className="btn secondary" onClick={() => startEdit(b)}>Modifier</button>
+                  <button className="btn secondary danger" onClick={() => remove(b.id)}>Supprimer</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminComments() {
+  const [comments, setComments] = useState(null);
+  const load = useCallback(() => { api("/api/admin/comments").then(setComments).catch(() => setComments([])); }, []);
+  useEffect(() => { load(); }, [load]);
+
+  async function remove(id) {
+    if (!window.confirm("Supprimer ce commentaire ?")) return;
+    await api(`/api/admin/comments/${id}`, { method: "DELETE" }).catch(() => {});
+    load();
+  }
+
+  return (
+    <div>
+      <h2 style={{ marginBottom: "1rem" }}>Commentaires ({comments ? comments.length : "…"})</h2>
+      {comments === null ? (
+        <p className="empty-state">Chargement…</p>
+      ) : comments.length === 0 ? (
+        <p className="empty-state">Aucun commentaire pour le moment.</p>
+      ) : (
+        comments.map((c) => (
+          <div className="comment" key={c.id}>
+            <div className="who">{c.username} · {c.bookTitle} · {new Date(c.createdAt).toLocaleString("fr-FR")}</div>
+            <p>{c.text}</p>
+            <button className="btn secondary danger" onClick={() => remove(c.id)}>Supprimer</button>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function AdminMessages() {
+  const [messages, setMessages] = useState(null);
+  const load = useCallback(() => { api("/api/admin/messages").then(setMessages).catch(() => setMessages([])); }, []);
+  useEffect(() => { load(); }, [load]);
+
+  async function remove(id) {
+    await api(`/api/admin/messages/${id}`, { method: "DELETE" }).catch(() => {});
+    load();
+  }
+
+  return (
+    <div>
+      <h2 style={{ marginBottom: "1rem" }}>Messages de contact ({messages ? messages.length : "…"})</h2>
       {messages === null ? (
         <p className="empty-state">Chargement…</p>
       ) : messages.length === 0 ? (
@@ -560,9 +761,44 @@ function Admin({ user }) {
             <div className="who">{m.name} ({m.email}) · {new Date(m.createdAt).toLocaleString("fr-FR")}</div>
             <strong>{m.subject}</strong>
             <p>{m.message}</p>
+            <button className="btn secondary danger" onClick={() => remove(m.id)}>Supprimer</button>
           </div>
         ))
       )}
+    </div>
+  );
+}
+
+function Admin({ user }) {
+  const [tab, setTab] = useState("fiches");
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    if (user && user.role === "admin") {
+      api("/api/csrf").then((d) => { csrfToken = d.csrfToken; });
+      api("/api/categories").then(setCategories).catch(() => {});
+    }
+  }, [user]);
+
+  if (user === undefined) return null;
+  if (!user || user.role !== "admin") {
+    return <div className="app-shell"><p className="empty-state">Accès réservé à l'administrateur.</p></div>;
+  }
+
+  return (
+    <div className="app-shell">
+      <h1 style={{ margin: "2rem 0 0.3rem" }}>Administration</h1>
+      <p style={{ color: "var(--text-dim)", marginBottom: "1.2rem" }}>Gère les fiches, les commentaires et les messages du site.</p>
+      <div className="drawer-tabs">
+        <button className="drawer-tab" aria-selected={tab === "fiches"} onClick={() => setTab("fiches")}>Fiches</button>
+        <button className="drawer-tab" aria-selected={tab === "commentaires"} onClick={() => setTab("commentaires")}>Commentaires</button>
+        <button className="drawer-tab" aria-selected={tab === "messages"} onClick={() => setTab("messages")}>Messages</button>
+      </div>
+      <div style={{ marginTop: "1.4rem" }}>
+        {tab === "fiches" && <AdminBooks categories={categories} />}
+        {tab === "commentaires" && <AdminComments />}
+        {tab === "messages" && <AdminMessages />}
+      </div>
     </div>
   );
 }

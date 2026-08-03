@@ -362,6 +362,132 @@ route("GET", "/api/admin/messages", async (req, res) => {
   );
 });
 
+/* --- admin : garde commune --- */
+function requireAdmin(req, res, cookies) {
+  const auth = getAuth(req);
+  if (!auth || auth.user.role !== "admin") {
+    sendJson(res, 403, { error: "Accès refusé." });
+    return null;
+  }
+  if (!requireCsrf(req, cookies)) {
+    sendJson(res, 403, { error: "Jeton CSRF invalide." });
+    return null;
+  }
+  return auth;
+}
+
+/* --- admin : créer une fiche --- */
+route("POST", "/api/admin/books", async (req, res, params, cookies) => {
+  if (!requireAdmin(req, res, cookies)) return;
+  const body = await readBody(req);
+  const db = load();
+
+  const title = cleanText(body.title, 160);
+  const author = cleanText(body.author, 120);
+  const year = cleanText(body.year, 30);
+  const category = cleanText(body.category, 40);
+  const summary = cleanText(body.summary, 500);
+  const source = cleanText(body.source, 500);
+  const sourceLabel = cleanText(body.sourceLabel, 80) || "Source externe";
+
+  if (title.length < 2) return sendJson(res, 400, { error: "Titre trop court." });
+  if (!db.categories.some((c) => c.id === category)) return sendJson(res, 400, { error: "Catégorie invalide." });
+  if (source && !/^https?:\/\//i.test(source)) return sendJson(res, 400, { error: "Le lien source doit commencer par http(s)://" });
+
+  const book = {
+    id: "b" + crypto.randomBytes(6).toString("hex"),
+    title,
+    author: author || "Auteur inconnu",
+    year: year || "—",
+    category,
+    summary,
+    source: source || "",
+    sourceLabel,
+  };
+  db.books.push(book);
+  await save();
+  sendJson(res, 201, book);
+});
+
+/* --- admin : modifier une fiche --- */
+route("PUT", "/api/admin/books/:id", async (req, res, params, cookies) => {
+  if (!requireAdmin(req, res, cookies)) return;
+  const db = load();
+  const book = db.books.find((b) => b.id === params.id);
+  if (!book) return sendJson(res, 404, { error: "Fiche introuvable." });
+
+  const body = await readBody(req);
+  if (body.title !== undefined) book.title = cleanText(body.title, 160);
+  if (body.author !== undefined) book.author = cleanText(body.author, 120);
+  if (body.year !== undefined) book.year = cleanText(body.year, 30);
+  if (body.summary !== undefined) book.summary = cleanText(body.summary, 500);
+  if (body.sourceLabel !== undefined) book.sourceLabel = cleanText(body.sourceLabel, 80);
+  if (body.source !== undefined) {
+    const source = cleanText(body.source, 500);
+    if (source && !/^https?:\/\//i.test(source)) return sendJson(res, 400, { error: "Le lien source doit commencer par http(s)://" });
+    book.source = source;
+  }
+  if (body.category !== undefined) {
+    if (!db.categories.some((c) => c.id === body.category)) return sendJson(res, 400, { error: "Catégorie invalide." });
+    book.category = body.category;
+  }
+  await save();
+  sendJson(res, 200, book);
+});
+
+/* --- admin : supprimer une fiche --- */
+route("DELETE", "/api/admin/books/:id", async (req, res, params, cookies) => {
+  if (!requireAdmin(req, res, cookies)) return;
+  const db = load();
+  const before = db.books.length;
+  db.books = db.books.filter((b) => b.id !== params.id);
+  if (db.books.length === before) return sendJson(res, 404, { error: "Fiche introuvable." });
+  db.comments = db.comments.filter((c) => c.bookId !== params.id);
+  await save();
+  sendJson(res, 200, { ok: true });
+});
+
+/* --- admin : lister tous les commentaires (modération) --- */
+route("GET", "/api/admin/comments", async (req, res, params, cookies) => {
+  const auth = getAuth(req);
+  if (!auth || auth.user.role !== "admin") return sendJson(res, 403, { error: "Accès refusé." });
+  const db = load();
+  const comments = [...db.comments]
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .map((c) => {
+      const book = db.books.find((b) => b.id === c.bookId);
+      return {
+        ...c,
+        text: escapeHtml(c.text),
+        username: escapeHtml(c.username),
+        bookTitle: book ? book.title : "(fiche supprimée)",
+      };
+    });
+  sendJson(res, 200, comments);
+});
+
+/* --- admin : supprimer un commentaire --- */
+route("DELETE", "/api/admin/comments/:id", async (req, res, params, cookies) => {
+  if (!requireAdmin(req, res, cookies)) return;
+  const db = load();
+  const before = db.comments.length;
+  db.comments = db.comments.filter((c) => c.id !== params.id);
+  if (db.comments.length === before) return sendJson(res, 404, { error: "Commentaire introuvable." });
+  await save();
+  sendJson(res, 200, { ok: true });
+});
+
+/* --- admin : supprimer un message de contact --- */
+route("DELETE", "/api/admin/messages/:id", async (req, res, params, cookies) => {
+  if (!requireAdmin(req, res, cookies)) return;
+  const db = load();
+  const before = db.messages.length;
+  db.messages = db.messages.filter((m) => m.id !== params.id);
+  if (db.messages.length === before) return sendJson(res, 404, { error: "Message introuvable." });
+  await save();
+  sendJson(res, 200, { ok: true });
+});
+
 /* ---------------------------------------------------------------- */
 /* Fichiers statiques (frontend)                                     */
 /* ---------------------------------------------------------------- */

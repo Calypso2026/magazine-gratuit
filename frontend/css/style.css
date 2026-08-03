@@ -91,19 +91,21 @@ button, input, textarea, select { font-family: inherit; font-size: 1rem; }
 }
 .brand-text { display: flex; flex-direction: column; line-height: 1.05; }
 .brand-main {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: "Playfair Display", serif;
   font-weight: 700;
-  font-size: 1.02rem;
-  letter-spacing: 0.06em;
-  background: linear-gradient(90deg, #F5DFA0, #C9962F);
+  font-style: italic;
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  background: linear-gradient(90deg, #F7E7B4, #D4AF37 55%, #9C7A22);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .brand-sub {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   color: var(--text-dim);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
 }
 
 nav.main-nav { display: flex; gap: 1.3rem; flex-wrap: wrap; align-items: center; }

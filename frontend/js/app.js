@@ -135,18 +135,26 @@ function CoverArt({ id, color, context = "c", imageUrl }) {
 
 function LogoMark() {
   return (
-    <svg width="30" height="30" viewBox="0 0 40 40" aria-hidden="true">
+    <svg width="34" height="34" viewBox="0 0 44 44" aria-hidden="true">
       <defs>
         <linearGradient id="logoGold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#F5DFA0" />
-          <stop offset="100%" stopColor="#C9962F" />
+          <stop offset="0%" stopColor="#F7E7B4" />
+          <stop offset="50%" stopColor="#D4AF37" />
+          <stop offset="100%" stopColor="#9C7A22" />
         </linearGradient>
       </defs>
-      <rect x="10" y="4" width="20" height="26" rx="3" transform="rotate(-10 10 4)" fill="url(#logoGold)" opacity="0.4" />
-      <rect x="12" y="6" width="20" height="26" rx="3" transform="rotate(6 12 6)" fill="url(#logoGold)" opacity="0.7" />
-      <rect x="10" y="5" width="20" height="28" rx="3" fill="url(#logoGold)" />
-      <rect x="14" y="10" width="12" height="2" rx="1" fill="#0A1128" opacity="0.55" />
-      <rect x="14" y="15" width="8" height="2" rx="1" fill="#0A1128" opacity="0.4" />
+      <circle cx="22" cy="22" r="20" fill="none" stroke="url(#logoGold)" strokeWidth="1.4" />
+      <circle cx="22" cy="22" r="16.5" fill="none" stroke="url(#logoGold)" strokeWidth="0.7" opacity="0.7" />
+      <text
+        x="22" y="29"
+        textAnchor="middle"
+        fontFamily="'Playfair Display', serif"
+        fontWeight="700"
+        fontSize="19"
+        fill="url(#logoGold)"
+      >M</text>
+      <circle cx="22" cy="6.5" r="1.1" fill="url(#logoGold)" />
+      <circle cx="22" cy="37.5" r="1.1" fill="url(#logoGold)" />
     </svg>
   );
 }

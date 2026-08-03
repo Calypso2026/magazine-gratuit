@@ -388,7 +388,7 @@ route("POST", "/api/admin/books", async (req, res, params, cookies) => {
   const category = cleanText(body.category, 40);
   const summary = cleanText(body.summary, 500);
   const source = cleanText(body.source, 500);
-  const sourceLabel = cleanText(body.sourceLabel, 80) || "Source externe";
+  const sourceLabel = cleanText(body.sourceLabel, 80) || "Télécharger";
   const coverImage = cleanText(body.coverImage, 500);
 
   if (title.length < 2) return sendJson(res, 400, { error: "Titre trop court." });
@@ -399,8 +399,8 @@ route("POST", "/api/admin/books", async (req, res, params, cookies) => {
   const book = {
     id: "b" + crypto.randomBytes(6).toString("hex"),
     title,
-    author: author || "Auteur inconnu",
-    year: year || "—",
+    author: author || "",
+    year: year || "",
     category,
     summary,
     source: source || "",

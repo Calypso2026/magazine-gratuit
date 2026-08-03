@@ -259,7 +259,7 @@ function CategoryPreview() {
                     <CoverArt id={b.id} color={c.color} context="mini" imageUrl={b.coverImage} />
                     <div className="mp-body">
                       <span className="mp-title">{b.title}</span>
-                      <span className="mp-year mono">{b.year}</span>
+                      {b.year && <span className="mp-year mono">{b.year}</span>}
                     </div>
                   </div>
                 ))}
@@ -358,9 +358,9 @@ function Catalog({ hash }) {
                   </a>
                 )}
                 <div className="card-body">
-                  <span className="stamp">{b.year}</span>
+                  {b.year && <span className="stamp">{b.year}</span>}
                   <h3>{b.title}</h3>
-                  <div className="author">{b.author}</div>
+                  {b.author && <div className="author">{b.author}</div>}
                   <p className="summary">{b.summary}</p>
                   <div className="meta">{b.sourceLabel}</div>
                 </div>
@@ -400,7 +400,14 @@ function BookDetail({ id, user }) {
       .then((b) => {
         setBook(b);
         api(`/api/books?category=${b.category}`).then((list) => {
-          setRelated(list.filter((x) => x.id !== id).slice(0, 4));
+          const sameCategory = list.filter((x) => x.id !== id);
+          if (sameCategory.length > 0) {
+            setRelated(sameCategory.slice(0, 4));
+          } else {
+            api("/api/books").then((all) => {
+              setRelated(all.filter((x) => x.id !== id).slice(0, 4));
+            }).catch(() => {});
+          }
         }).catch(() => {});
       })
       .catch(() => setNotFound(true));
@@ -430,14 +437,16 @@ function BookDetail({ id, user }) {
       <div className="book-detail" style={{ "--detail-color": cat ? cat.color : "#5B6CFF" }}>
         <CoverArt id={book.id} color={cat ? cat.color : "#5B6CFF"} context="detail" imageUrl={book.coverImage} />
         <div className="detail-body">
-        <span className="stamp" style={{ background: cat ? cat.color : "#5B6CFF", color: "#fff" }}>{book.year}</span>
+        {book.year && <span className="stamp" style={{ background: cat ? cat.color : "#5B6CFF", color: "#fff" }}>{book.year}</span>}
         <h1 style={{ marginTop: "0.6rem" }}>{book.title}</h1>
-        <p className="author" style={{ color: "var(--text-dim)" }}>{book.author}</p>
+        {book.author && <p className="author" style={{ color: "var(--text-dim)" }}>{book.author}</p>}
         <p>{book.summary}</p>
         <div className="meta-row">
-          <a className="btn" href={book.source} target="_blank" rel="noopener noreferrer">
-            Lire / télécharger sur {book.sourceLabel}
-          </a>
+          {book.source && (
+            <a className="btn" href={book.source} target="_blank" rel="noopener noreferrer">
+              Télécharger
+            </a>
+          )}
           <button className="btn secondary" onClick={() => navigate("#/livres")}>Retour au catalogue</button>
         </div>
         </div>
@@ -459,9 +468,9 @@ function BookDetail({ id, user }) {
               >
                 <CoverArt id={r.id} color={cat ? cat.color : "#5B6CFF"} context="related" imageUrl={r.coverImage} />
                 <div className="card-body">
-                  <span className="stamp">{r.year}</span>
+                  {r.year && <span className="stamp">{r.year}</span>}
                   <h3>{r.title}</h3>
-                  <div className="author">{r.author}</div>
+                  {r.author && <div className="author">{r.author}</div>}
                 </div>
               </div>
             ))}
@@ -665,7 +674,6 @@ function AdminBooks({ categories }) {
   const [books, setBooks] = useState(null);
   const [form, setForm] = useState(EMPTY_BOOK_FORM);
   const [editingId, setEditingId] = useState(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -677,11 +685,10 @@ function AdminBooks({ categories }) {
   function startEdit(b) {
     setEditingId(b.id);
     setForm({ title: b.title, author: b.author, year: b.year, category: b.category, summary: b.summary, source: b.source, sourceLabel: b.sourceLabel, coverImage: b.coverImage || "" });
-    setShowAdvanced(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function cancelEdit() { setEditingId(null); setForm(EMPTY_BOOK_FORM); setError(""); setShowAdvanced(false); }
+  function cancelEdit() { setEditingId(null); setForm(EMPTY_BOOK_FORM); setError(""); }
 
   async function submit(e) {
     e.preventDefault();
@@ -714,10 +721,7 @@ function AdminBooks({ categories }) {
 
   return (
     <div>
-      <h2 style={{ marginBottom: "0.3rem" }}>{editingId ? "Modifier la fiche" : "Ajouter une fiche"}</h2>
-      <p style={{ color: "var(--text-dim)", fontSize: "0.85rem", marginBottom: "1rem" }}>
-        Remplis juste titre, auteur et catégorie pour commencer — le reste est facultatif.
-      </p>
+      <h2 style={{ marginBottom: "1rem" }}>{editingId ? "Modifier la fiche" : "Ajouter une fiche"}</h2>
       <form onSubmit={submit} className="admin-form">
         {error && <div className="form-error">{error}</div>}
         <div className="admin-form-grid">
@@ -726,62 +730,39 @@ function AdminBooks({ categories }) {
             <input required value={form.title} onChange={update("title")} placeholder="Le titre du livre / magazine" />
           </div>
           <div className="field">
-            <label>Auteur</label>
-            <input value={form.author} onChange={update("author")} />
-          </div>
-          <div className="field">
             <label>Catégorie</label>
             <select required value={form.category} onChange={update("category")}>
               <option value="">— choisir —</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </div>
-          <div className="field">
-            <label>Année</label>
-            <input value={form.year} onChange={update("year")} placeholder="1862" />
-          </div>
           <div className="field" style={{ gridColumn: "1 / -1" }}>
-            <label>Résumé (quelques lignes)</label>
+            <label>Description</label>
             <textarea rows={2} value={form.summary} onChange={update("summary")} />
           </div>
-        </div>
-
-        <button
-          type="button"
-          className="linklike admin-advanced-toggle"
-          onClick={() => setShowAdvanced((v) => !v)}
-        >
-          {showAdvanced ? "▾ Masquer les options avancées" : "▸ Ajouter un lien de téléchargement ou une photo (facultatif)"}
-        </button>
-
-        {showAdvanced && (
-          <div className="admin-form-grid" style={{ marginTop: "0.8rem" }}>
-            <div className="field">
-              <label>Lien source (http/https)</label>
-              <input value={form.source} onChange={update("source")} placeholder="https://..." />
-            </div>
-            <div className="field">
-              <label>Nom de la source</label>
-              <input value={form.sourceLabel} onChange={update("sourceLabel")} placeholder="Projet Gutenberg" />
-            </div>
-            <div className="field" style={{ gridColumn: "1 / -1" }}>
-              <label>Image de couverture (URL)</label>
-              <input
-                value={form.coverImage}
-                onChange={update("coverImage")}
-                placeholder="https://exemple.com/couverture.jpg"
-              />
-              <span style={{ fontSize: "0.78rem", color: "var(--text-dim)" }}>
-                Colle ici le lien direct d'une image (ex. une photo hébergée sur imgur.com — dépose ton image dessus,
-                clic droit sur l'image affichée → « Copier l'adresse de l'image »). Laisse vide pour garder l'affiche générée automatiquement.
-              </span>
-              {form.coverImage && (
-                <img src={form.coverImage} alt="Aperçu" className="admin-cover-preview" />
-              )}
-            </div>
+          <div className="field" style={{ gridColumn: "1 / -1" }}>
+            <label>Image (URL)</label>
+            <input
+              value={form.coverImage}
+              onChange={update("coverImage")}
+              placeholder="https://exemple.com/couverture.jpg"
+            />
+            <span style={{ fontSize: "0.78rem", color: "var(--text-dim)" }}>
+              Colle ici le lien direct d'une image (ex. une photo hébergée sur imgur.com — dépose ton image dessus,
+              clic droit sur l'image affichée → « Copier l'adresse de l'image »). Laisse vide pour garder l'affiche générée automatiquement.
+            </span>
+            {form.coverImage && (
+              <img src={form.coverImage} alt="Aperçu" className="admin-cover-preview" />
+            )}
           </div>
-        )}
-
+          <div className="field" style={{ gridColumn: "1 / -1" }}>
+            <label>Lien de téléchargement</label>
+            <input value={form.source} onChange={update("source")} placeholder="https://..." />
+            <span style={{ fontSize: "0.78rem", color: "var(--text-dim)" }}>
+              Le lien vers lequel pointera le bouton « Télécharger » sur la fiche.
+            </span>
+          </div>
+        </div>
         <div style={{ display: "flex", gap: "0.7rem", marginTop: "1rem" }}>
           <button className="btn" type="submit" disabled={saving}>{editingId ? "Enregistrer" : "Ajouter"}</button>
           {editingId && <button type="button" className="btn secondary" onClick={cancelEdit}>Annuler</button>}
@@ -805,7 +786,6 @@ function AdminBooks({ categories }) {
                 <span className="stamp" style={{ background: cat ? cat.color : "#5B6CFF" }}>{cat ? cat.label : b.category}</span>
                 <div className="admin-row-main">
                   <strong>{b.title}</strong>
-                  <span className="mono" style={{ color: "var(--text-dim)" }}> · {b.author} · {b.year}</span>
                 </div>
                 <div className="admin-row-actions">
                   <button className="btn secondary" onClick={() => startEdit(b)}>Modifier</button>

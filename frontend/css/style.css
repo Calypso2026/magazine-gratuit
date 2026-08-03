@@ -189,7 +189,7 @@ nav.main-nav a:hover, nav.main-nav button.linklike:hover { color: var(--text); }
   text-align: left;
   font-family: inherit;
   width: 100%;
-  margin-bottom: 2.2rem;
+  margin-bottom: 4.6rem;
 }
 .category-band {
   border-radius: var(--radius);
@@ -216,7 +216,7 @@ nav.main-nav a:hover, nav.main-nav button.linklike:hover { color: var(--text); }
   position: absolute;
   left: 1.8rem;
   right: 1.8rem;
-  bottom: -44px;
+  bottom: -90px;
   display: flex;
   gap: 0.6rem;
 }
@@ -226,7 +226,6 @@ nav.main-nav a:hover, nav.main-nav button.linklike:hover { color: var(--text); }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
-  height: 88px;
   padding: 0;
   box-shadow: var(--glow);
   display: flex;
@@ -234,9 +233,9 @@ nav.main-nav a:hover, nav.main-nav button.linklike:hover { color: var(--text); }
   overflow: hidden;
   transition: transform 0.15s ease;
 }
-.mini-poster .cover-art { width: 100%; height: 34px; display: block; object-fit: cover; }
+.mini-poster .cover-art { width: 100%; aspect-ratio: 2 / 3; height: auto; display: block; object-fit: cover; }
 .mini-poster .mp-body {
-  padding: 0.4rem 0.55rem;
+  padding: 0.45rem 0.55rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -321,7 +320,7 @@ nav.main-nav a:hover, nav.main-nav button.linklike:hover { color: var(--text); }
   min-height: 195px;
   overflow: hidden;
 }
-.index-card .cover-art { width: 100%; height: 96px; display: block; object-fit: cover; }
+.index-card .cover-art { width: 100%; aspect-ratio: 2 / 3; height: auto; display: block; object-fit: cover; }
 .card-download {
   position: absolute;
   top: 8px;
@@ -381,10 +380,17 @@ nav.main-nav a:hover, nav.main-nav button.linklike:hover { color: var(--text); }
   margin: 1.7rem 0 2rem;
   position: relative;
   overflow: hidden;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 0;
 }
-.book-detail .cover-art { width: 100%; height: 170px; display: block; object-fit: cover; }
+.book-detail .cover-art { width: 100%; height: 100%; min-height: 100%; display: block; object-fit: cover; }
 .book-detail .detail-body { padding: 2.2rem; }
 .book-detail .meta-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0 1.3rem; }
+@media (max-width: 640px) {
+  .book-detail { grid-template-columns: 1fr; }
+  .book-detail .cover-art { aspect-ratio: 2 / 3; height: auto; max-width: 220px; margin: 1.4rem auto 0; border-radius: 14px; }
+}
 .btn {
   display: inline-block;
   background: linear-gradient(90deg, var(--blue), var(--pink));

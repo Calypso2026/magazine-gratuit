@@ -102,7 +102,10 @@ function seededRand(seed) {
   };
 }
 
-function CoverArt({ id, color, context = "c" }) {
+function CoverArt({ id, color, context = "c", imageUrl }) {
+  if (imageUrl) {
+    return <img className="cover-art" src={imageUrl} alt="" loading="lazy" />;
+  }
   const rand = seededRand(hashStr(id + context));
   const shapes = Array.from({ length: 3 }).map((_, i) => ({
     cx: 20 + rand() * 160,
@@ -130,6 +133,24 @@ function CoverArt({ id, color, context = "c" }) {
 
 
 
+function LogoMark() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 40 40" aria-hidden="true">
+      <defs>
+        <linearGradient id="logoGold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#F5DFA0" />
+          <stop offset="100%" stopColor="#C9962F" />
+        </linearGradient>
+      </defs>
+      <rect x="10" y="4" width="20" height="26" rx="3" transform="rotate(-10 10 4)" fill="url(#logoGold)" opacity="0.4" />
+      <rect x="12" y="6" width="20" height="26" rx="3" transform="rotate(6 12 6)" fill="url(#logoGold)" opacity="0.7" />
+      <rect x="10" y="5" width="20" height="28" rx="3" fill="url(#logoGold)" />
+      <rect x="14" y="10" width="12" height="2" rx="1" fill="#0A1128" opacity="0.55" />
+      <rect x="14" y="15" width="8" height="2" rx="1" fill="#0A1128" opacity="0.4" />
+    </svg>
+  );
+}
+
 function TopBar({ user, onLogout }) {
   const [q, setQ] = useState("");
   function submitSearch(e) {
@@ -140,7 +161,11 @@ function TopBar({ user, onLogout }) {
     <div className="top-bar">
       <div className="top-bar-inner">
         <div className="brand" onClick={() => navigate("#/")}>
-          magazinegratuit.com
+          <LogoMark />
+          <span className="brand-text">
+            <span className="brand-main">MAGAZINE GRATUIT</span>
+            <span className="brand-sub mono">.com</span>
+          </span>
         </div>
         <form className="search-box" onSubmit={submitSearch}>
           <input
@@ -231,7 +256,7 @@ function CategoryPreview() {
               <div className="mini-posters">
                 {preview.map((b) => (
                   <div key={b.id} className="mini-poster">
-                    <CoverArt id={b.id} color={c.color} context="mini" />
+                    <CoverArt id={b.id} color={c.color} context="mini" imageUrl={b.coverImage} />
                     <div className="mp-body">
                       <span className="mp-title">{b.title}</span>
                       <span className="mp-year mono">{b.year}</span>
@@ -317,7 +342,7 @@ function Catalog({ hash }) {
                 onClick={() => navigate(`#/livre/${b.id}`)}
                 onKeyDown={(e) => e.key === "Enter" && navigate(`#/livre/${b.id}`)}
               >
-                <CoverArt id={b.id} color={cat ? cat.color : "#5B6CFF"} context="grid" />
+                <CoverArt id={b.id} color={cat ? cat.color : "#5B6CFF"} context="grid" imageUrl={b.coverImage} />
                 <div className="card-body">
                   <span className="stamp">{b.year}</span>
                   <h3>{b.title}</h3>
@@ -380,7 +405,7 @@ function BookDetail({ id, user }) {
   return (
     <div className="app-shell">
       <div className="book-detail" style={{ "--detail-color": cat ? cat.color : "#5B6CFF" }}>
-        <CoverArt id={book.id} color={cat ? cat.color : "#5B6CFF"} context="detail" />
+        <CoverArt id={book.id} color={cat ? cat.color : "#5B6CFF"} context="detail" imageUrl={book.coverImage} />
         <div className="detail-body">
         <span className="stamp" style={{ background: cat ? cat.color : "#5B6CFF", color: "#fff" }}>{book.year}</span>
         <h1 style={{ marginTop: "0.6rem" }}>{book.title}</h1>
@@ -585,7 +610,7 @@ function Contact() {
 /* Admin : messages reçus                                             */
 /* ---------------------------------------------------------------- */
 
-const EMPTY_BOOK_FORM = { title: "", author: "", year: "", category: "", summary: "", source: "", sourceLabel: "" };
+const EMPTY_BOOK_FORM = { title: "", author: "", year: "", category: "", summary: "", source: "", sourceLabel: "", coverImage: "" };
 
 function AdminBooks({ categories }) {
   const [books, setBooks] = useState(null);
@@ -601,7 +626,7 @@ function AdminBooks({ categories }) {
 
   function startEdit(b) {
     setEditingId(b.id);
-    setForm({ title: b.title, author: b.author, year: b.year, category: b.category, summary: b.summary, source: b.source, sourceLabel: b.sourceLabel });
+    setForm({ title: b.title, author: b.author, year: b.year, category: b.category, summary: b.summary, source: b.source, sourceLabel: b.sourceLabel, coverImage: b.coverImage || "" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -672,6 +697,21 @@ function AdminBooks({ categories }) {
           <div className="field">
             <label>Nom de la source</label>
             <input value={form.sourceLabel} onChange={update("sourceLabel")} placeholder="Projet Gutenberg" />
+          </div>
+          <div className="field" style={{ gridColumn: "1 / -1" }}>
+            <label>Image de couverture (URL, optionnel)</label>
+            <input
+              value={form.coverImage}
+              onChange={update("coverImage")}
+              placeholder="https://exemple.com/couverture.jpg"
+            />
+            <span style={{ fontSize: "0.78rem", color: "var(--text-dim)" }}>
+              Colle ici le lien direct d'une image (ex. une photo hébergée sur imgur.com — dépose ton image dessus,
+              clic droit sur l'image affichée → « Copier l'adresse de l'image »). Laisse vide pour garder l'affiche générée automatiquement.
+            </span>
+            {form.coverImage && (
+              <img src={form.coverImage} alt="Aperçu" className="admin-cover-preview" />
+            )}
           </div>
         </div>
         <div style={{ display: "flex", gap: "0.7rem", marginTop: "0.6rem" }}>

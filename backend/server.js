@@ -389,10 +389,12 @@ route("POST", "/api/admin/books", async (req, res, params, cookies) => {
   const summary = cleanText(body.summary, 500);
   const source = cleanText(body.source, 500);
   const sourceLabel = cleanText(body.sourceLabel, 80) || "Source externe";
+  const coverImage = cleanText(body.coverImage, 500);
 
   if (title.length < 2) return sendJson(res, 400, { error: "Titre trop court." });
   if (!db.categories.some((c) => c.id === category)) return sendJson(res, 400, { error: "Catégorie invalide." });
   if (source && !/^https?:\/\//i.test(source)) return sendJson(res, 400, { error: "Le lien source doit commencer par http(s)://" });
+  if (coverImage && !/^https?:\/\//i.test(coverImage)) return sendJson(res, 400, { error: "Le lien de l'image doit commencer par http(s)://" });
 
   const book = {
     id: "b" + crypto.randomBytes(6).toString("hex"),
@@ -403,6 +405,7 @@ route("POST", "/api/admin/books", async (req, res, params, cookies) => {
     summary,
     source: source || "",
     sourceLabel,
+    coverImage: coverImage || "",
   };
   db.books.push(book);
   await save();
@@ -422,6 +425,11 @@ route("PUT", "/api/admin/books/:id", async (req, res, params, cookies) => {
   if (body.year !== undefined) book.year = cleanText(body.year, 30);
   if (body.summary !== undefined) book.summary = cleanText(body.summary, 500);
   if (body.sourceLabel !== undefined) book.sourceLabel = cleanText(body.sourceLabel, 80);
+  if (body.coverImage !== undefined) {
+    const coverImage = cleanText(body.coverImage, 500);
+    if (coverImage && !/^https?:\/\//i.test(coverImage)) return sendJson(res, 400, { error: "Le lien de l'image doit commencer par http(s)://" });
+    book.coverImage = coverImage;
+  }
   if (body.source !== undefined) {
     const source = cleanText(body.source, 500);
     if (source && !/^https?:\/\//i.test(source)) return sendJson(res, 400, { error: "Le lien source doit commencer par http(s)://" });

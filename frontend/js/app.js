@@ -98,7 +98,7 @@ function TopBar({ user, onLogout }) {
     <div className="top-bar">
       <div className="top-bar-inner">
         <div className="brand" onClick={() => navigate("#/")}>
-          Le Fichier <small>domaine public</small>
+          magazinegratuit.com
         </div>
         <form className="search-box" onSubmit={submitSearch}>
           <input
@@ -159,26 +159,45 @@ function Home() {
 
 function CategoryPreview() {
   const [categories, setCategories] = useState([]);
+  const [books, setBooks] = useState([]);
   useEffect(() => { api("/api/categories").then(setCategories).catch(() => {}); }, []);
+  useEffect(() => { api("/api/books").then(setBooks).catch(() => {}); }, []);
+
   return (
-    <div className="category-stacks">
-      {categories.map((c) => (
-        <button
-          key={c.id}
-          className="stack-tile"
-          onClick={() => navigate(`#/livres?category=${c.id}`)}
-        >
+    <div className="category-column">
+      {categories.map((c) => {
+        const preview = books.filter((b) => b.category === c.id).slice(0, 6);
+        return (
           <div
-            className="stack-visual"
-            style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}99)` }}
+            key={c.id}
+            className="category-row"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`#/livres?category=${c.id}`)}
+            onKeyDown={(e) => e.key === "Enter" && navigate(`#/livres?category=${c.id}`)}
           >
-            <div>
-              <span className="tile-label">{c.label}</span>
-              <span className="tile-code mono">{c.code}</span>
+            <div
+              className="category-band"
+              style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}99)` }}
+            >
+              <div>
+                <span className="tile-label">{c.label}</span>
+                <span className="tile-code mono">{c.code}</span>
+              </div>
             </div>
+            {preview.length > 0 && (
+              <div className="mini-posters">
+                {preview.map((b) => (
+                  <div key={b.id} className="mini-poster">
+                    <span className="mp-title">{b.title}</span>
+                    <span className="mp-year mono">{b.year}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </button>
-      ))}
+        );
+      })}
     </div>
   );
 }

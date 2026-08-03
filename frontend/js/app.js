@@ -157,31 +157,6 @@ function Home() {
   );
 }
 
-function PosterStack({ color }) {
-  // Empile quelques rectangles décalés pour évoquer une pile d'affiches
-  const layers = [
-    { rotate: -8, offset: 10, opacity: 0.35 },
-    { rotate: 6, offset: 6, opacity: 0.55 },
-    { rotate: -3, offset: 3, opacity: 0.8 },
-    { rotate: 0, offset: 0, opacity: 1 },
-  ];
-  return (
-    <div className="stack-visual">
-      {layers.map((l, i) => (
-        <div
-          key={i}
-          className="poster"
-          style={{
-            background: color,
-            transform: `translateY(${l.offset}px) rotate(${l.rotate}deg)`,
-            opacity: l.opacity,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
 function CategoryPreview() {
   const [categories, setCategories] = useState([]);
   useEffect(() => { api("/api/categories").then(setCategories).catch(() => {}); }, []);
@@ -193,9 +168,15 @@ function CategoryPreview() {
           className="stack-tile"
           onClick={() => navigate(`#/livres?category=${c.id}`)}
         >
-          <PosterStack color={c.color} />
-          <span className="tile-label">{c.label}</span>
-          <span className="tile-code mono">{c.code}</span>
+          <div
+            className="stack-visual"
+            style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}99)` }}
+          >
+            <div>
+              <span className="tile-label">{c.label}</span>
+              <span className="tile-code mono">{c.code}</span>
+            </div>
+          </div>
         </button>
       ))}
     </div>

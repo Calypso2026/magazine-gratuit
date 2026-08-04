@@ -189,7 +189,7 @@ nav.main-nav a:hover, nav.main-nav button.linklike:hover { color: var(--text); }
   text-align: left;
   font-family: inherit;
   width: 100%;
-  margin-bottom: 4.6rem;
+  margin-bottom: 7rem;
 }
 .category-band {
   border-radius: var(--radius);
@@ -216,13 +216,15 @@ nav.main-nav a:hover, nav.main-nav button.linklike:hover { color: var(--text); }
   position: absolute;
   left: 1.8rem;
   right: 1.8rem;
-  bottom: -90px;
+  bottom: -104px;
   display: flex;
   gap: 0.6rem;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 .mini-poster {
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 96px;
+  width: 96px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -260,9 +262,9 @@ nav.main-nav a:hover, nav.main-nav button.linklike:hover { color: var(--text); }
 }
 
 @media (max-width: 720px) {
-  .mini-posters { flex-wrap: wrap; bottom: -60px; }
-  .mini-poster { flex: 1 1 calc(33.333% - 0.5rem); height: 62px; }
-  .category-row { margin-bottom: 1rem; }
+  .category-row { margin-bottom: 5.6rem; }
+  .mini-posters { bottom: -84px; left: 1.2rem; right: 1.2rem; }
+  .mini-poster { flex: 0 0 78px; width: 78px; }
 }
 
 /* ---------- Drawer tabs (category filters) ---------- */
